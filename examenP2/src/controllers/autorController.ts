@@ -48,12 +48,10 @@ export async function buscarAutorController(req: Request, res: Response): Promis
     }
 }
 
-// Controlador para actualizar un tutor por su ID
 export async function actualizarAutorController(req: Request, res: Response): Promise<void> {
     const id: number = parseInt(req.params.id);
     const { nombre, apellido, fechaNacimiento } = req.body;
 
-    // Crea un objeto tutor usando la interfaz Tutor
     const autor: Autor = {
         nombre,
         apellido,
@@ -61,31 +59,24 @@ export async function actualizarAutorController(req: Request, res: Response): Pr
     };
 
     try {
-        // Llama a la función actualizarTutor con el ID y el objeto tutor
         await actualizarAutor(id, autor);
 
-        // Si la actualización fue exitosa, devuelve una respuesta exitosa
-        res.status(200).json({ message: `Tutor con ID ${id} actualizado correctamente` });
+        res.status(200).json({ message: `Autor con ID ${id} actualizado correctamente` });
     } catch (error) {
-        // Si hubo un error, devuelve un error 500 junto con el mensaje de error
-        console.error(`Error al actualizar el tutor con ID ${id}:`, (error as Error).message);
-        res.status(500).json({ error: `Error al actualizar el tutor con ID ${id}` });
+        console.error(`Error al actualizar el autor con ID ${id}:`, (error as Error).message);
+        res.status(500).json({ error: `Error al actualizar el autor con ID ${id}` });
     }
 }
 
-// Controlador para eliminar un tutor por su ID
 export async function eliminarAutorController(req: Request, res: Response): Promise<void> {
     const id: number = parseInt(req.params.id);
 
     try {
-        // Llama a la función eliminarTutor con el ID del tutor
         await eliminarAutor(id);
 
-        // Si la eliminación fue exitosa, devuelve una respuesta exitosa
-        res.status(200).json({ message: `Tutor con ID ${id} eliminado correctamente` });
+        res.status(200).json({ message: `Autor con ID ${id} eliminado correctamente` });
     } catch (error) {
-        // Si hubo un error, devuelve un error 500 junto con el mensaje de error
-        console.error(`Error al eliminar el tutor con ID ${id}:`, (error as Error).message);
-        res.status(500).json({ error: `Error al eliminar el tutor con ID ${id}` });
+        console.error(`Error al eliminar el autor con ID ${id}:`, (error as Error).message);
+        res.status(500).json({ error: `Error al eliminar el autor con ID ${id}` });
     }
 }
