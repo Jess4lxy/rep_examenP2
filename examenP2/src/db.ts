@@ -165,7 +165,7 @@ export async function eliminarAutor(id: number): Promise<void> {
         await transaction.begin();
         const query = `
             DELETE FROM Autores
-            WHERE id_Tutor = @id
+            WHERE id = @id
         `;
         await transaction.request()
             .input('id', mssql.Int, id)
@@ -178,6 +178,168 @@ export async function eliminarAutor(id: number): Promise<void> {
             await transaction.rollback();
         }
         console.error(`Error al eliminar el autor con ID ${id}:`, (error as Error).message);
+        throw error;
+    } finally {
+        // Cerrar la conexión
+        if (pool) {
+            await pool.close();
+            console.log('Conexión cerrada correctamente');
+        }
+    }
+}
+export async function agregarLibro(libro: Libro): Promise<void> {
+    let pool: mssql.ConnectionPool | null = null;
+    let transaction: mssql.Transaction | null = null;
+
+    const { autorID, titulo, fechaPublicacion, precio } = libro;
+
+    try {
+        pool = await conectarBD();
+
+        transaction = new mssql.Transaction(pool);
+
+        await transaction.begin();
+
+        const query = `
+            INSERT INTO Libros (autorID, titulo, fechaPublicacion, precio)
+            VALUES (@autorID, @titulo, @fechaPublicacion, @precio)
+        `;
+        await transaction.request()
+            .input('autorID', mssql.Int, autorID)
+            .input('titulo', mssql.NVarChar, titulo)
+            .input('fechaPublicacion', mssql.Date, fechaPublicacion)
+            .input('precio', mssql.Date, precio)
+            .query(query);
+        await transaction.commit();
+        console.log('Libro agregado correctamente');
+
+    } catch (error) {
+        // Si hay algún error, hacer rollback de la transacción
+        if (transaction) {
+            await transaction.rollback();
+        }
+        console.error('Error al agregar el libro:', (error as Error).message);
+        throw error;
+    } finally {
+        // Cerrar la conexión
+        if (pool) {
+            await pool.close();
+            console.log('Conexión cerrada correctamente');
+        }
+    }
+}
+
+export async function obtenerLibros(): Promise<Libro[]> {
+    let pool: mssql.ConnectionPool | null = null;
+
+    try {
+        pool = await conectarBD();
+        const result = await pool.request().query('SELECT * FROM Libros');
+
+        return result.recordset as Libro[];
+    } catch (error) {
+        console.error('Error al obtener todos los libros:', (error as Error).message);
+        throw error;
+    } finally {
+        if (pool) {
+            await pool.close();
+        }
+    }
+}
+
+export async function buscarLibro(idOrTitulo: string): Promise<Libro | null> {
+    let pool: mssql.ConnectionPool | null = null;
+
+    try {
+        pool = await conectarBD();
+        const result = await pool.request()
+            .input('idOrTitulo', mssql.NVarChar, idOrTitulo)
+            .query(`
+                SELECT * FROM Libros
+                WHERE id = @idOrTitulo OR titulo LIKE @idOrTitulo
+            `);
+
+        if (result.recordset.length > 0) {
+            return result.recordset[0] as Libro;
+        } else {
+            return null;
+        }
+    } catch (error) {
+        console.error('Error al buscar el libro por ID o nombre:', (error as Error).message);
+        throw error;
+    } finally {
+        if (pool) {
+            await pool.close();
+        }
+    }
+}
+
+export async function actualizarLibro(id: number, libro: Libro): Promise<void> {
+    let pool: mssql.ConnectionPool | null = null;
+    let transaction: mssql.Transaction | null = null;
+
+    const { autorID, titulo, fechaPublicacion, precio } = libro;
+
+    try {
+        pool = await conectarBD();
+
+        transaction = new mssql.Transaction(pool);
+        await transaction.begin();
+        const query = `
+            UPDATE Libros
+            SET autorID = @autorID,
+                titulo = @titulo,
+                fechaPublicacion = @fechaPublicacion,
+                precio = @precio,
+            WHERE id = @id
+        `;
+        await transaction.request()
+            .input('autorID', mssql.Int, autorID)
+            .input('titulo', mssql.NVarChar, titulo)
+            .input('fechaPublicacion', mssql.Date, fechaPublicacion)
+            .input('precio', mssql.Date, precio)
+            .query(query);
+        await transaction.commit();
+        console.log(`Libro con ID ${id} actualizado correctamente`);
+
+    } catch (error) {
+        if (transaction) {
+            await transaction.rollback();
+        }
+        console.error(`Error al actualizar el libro con ID ${id}:`, (error as Error).message);
+        throw error;
+    } finally {
+        if (pool) {
+            await pool.close();
+            console.log('Conexión cerrada correctamente');
+        }
+    }
+}
+
+export async function eliminarLibro(id: number): Promise<void> {
+    let pool: mssql.ConnectionPool | null = null;
+    let transaction: mssql.Transaction | null = null;
+
+    try {
+        pool = await conectarBD();
+
+        transaction = new mssql.Transaction(pool);
+        await transaction.begin();
+        const query = `
+            DELETE FROM Libros
+            WHERE id = @id
+        `;
+        await transaction.request()
+            .input('id', mssql.Int, id)
+            .query(query);
+        await transaction.commit();
+        console.log(`Libro con ID ${id} eliminado correctamente`);
+
+    } catch (error) {
+        if (transaction) {
+            await transaction.rollback();
+        }
+        console.error(`Error al eliminar el libro con ID ${id}:`, (error as Error).message);
         throw error;
     } finally {
         // Cerrar la conexión
